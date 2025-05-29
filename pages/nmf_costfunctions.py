@@ -1,39 +1,69 @@
-# Real-time NMF heatmap updates with widget interface
+# Interactive Plotly heatmap with built-in sliders (no ipywidgets)
 import numpy as np
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 from sklearn.decomposition import NMF
-import ipywidgets as widgets
-from IPython.display import display, clear_output
 
-# Generate clean synthetic non-negative data
-np.random.seed(42)
-V_clean = np.abs(np.random.rand(40, 60))
+# Parameters
+rows, cols, rank = 40, 60, 5
+steps = 50  # number of interpolation steps
 
-# Construct matrix with Poisson-like structure to favor KL divergence
-W_true = np.abs(np.random.gamma(shape=1.0, scale=1.0, size=(40, 5)))
-H_true = np.abs(np.random.gamma(shape=1.0, scale=1.0, size=(5, 60)))
-V_noisy = W_true @ H_true
+# Generate data
+def generate_data(r, c, k):
+    np.random.seed(42)
+    V_clean = np.abs(np.random.rand(r, c))
+    W_true = np.abs(np.random.gamma(1.0, 1.0, (r, k)))
+    H_true = np.abs(np.random.gamma(1.0, 1.0, (k, c)))
+    V_noisy = np.clip(W_true @ H_true + np.random.poisson(0.5, (r, c)), 1e-10, None)
+    return V_clean, V_noisy
 
-# Add positive noise resembling count data (to favor KL divergence)
-V_noisy += np.random.poisson(lam=0.5, size=V_noisy.shape)
-V_noisy = np.clip(V_noisy, 1e-10, None)
+V_clean, V_noisy = generate_data(rows, cols, rank)
 
-# Interactive widget setup
-def update_heatmap(alpha):
-    V_interp = (1 - alpha) * V_clean + alpha * V_noisy
-    clear_output(wait=True)
-    display(slider)
+# Prepare frames for interpolation
+frames = []
+for i in range(steps + 1):
+    alpha = i / steps
+n    V_interp = (1 - alpha) * V_clean + alpha * V_noisy
+    frames.append(go.Frame(
+        data=[go.Heatmap(z=V_interp, colorscale='Viridis')],
+        name=f'{alpha:.2f}'
+    ))
 
-    plt.figure(figsize=(8, 6))
-    plt.imshow(V_interp, aspect='auto', cmap='viridis')
-    plt.title(f'Interpolated V (alpha={alpha:.2f})')
-    plt.colorbar()
-    plt.tight_layout()
-    plt.show()
+# Build figure
+fig = go.Figure(
+    data=[go.Heatmap(z=V_clean, colorscale='Viridis')],
+    frames=frames,
+    layout=go.Layout(
+        title='Interpolated Heatmap',
+        updatemenus=[
+            dict(
+                type='buttons',
+                showactive=False,
+                y=1.05,
+                x=1.15,
+                xanchor='right',
+                yanchor='top',
+                pad=dict(t=0, r=10),
+                buttons=[
+                    dict(label='Play', method='animate', args=[None, {'frame': {'duration': 100, 'redraw': True}}]),
+                    dict(label='Pause', method='animate', args=[[None], {'frame': {'duration': 0, 'redraw': False}}])
+                ]
+            )
+        ],
+        sliders=[
+            dict(
+                steps=[
+                    dict(method='animate', args=[[fr.name], {'frame': {'duration': 0, 'redraw': True}}], label=fr.name)
+                    for fr in frames
+                ],
+                transition={'duration': 0},
+                x=0, y=-0.1,
+                currentvalue={'prefix': 'alpha = '}
+            )
+        ]
+    )
+)
 
-slider = widgets.FloatSlider(value=0.0, min=0.0, max=1.0, step=0.01, description='Alpha:')
-widgets.interact(update_heatmap, alpha=slider)
+fig.update_layout(width=700, height=500)
+fig.show()
 
-print("""
-Use the slider to smoothly transition between the clean and noisy data.
-""")
+print('Use the built-in slider or play button to interpolate between clean and noisy data.')
