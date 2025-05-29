@@ -42,7 +42,7 @@ st.title("🔶 Interpolated Heatmap")
 
 # Optional image (expander for pop-up feel)
 with st.expander("Show Heatmap Visualization"):
-    st.image("https://via.placeholder.com/700x400.png?text=Heatmap", use_column_width=True)
+    st.image("https://via.placeholder.com/700x400.png?text=Heatmap", use_container_width=True)
 
 # Generate figure
 fig = go.Figure(
