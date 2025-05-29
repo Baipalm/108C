@@ -1,8 +1,10 @@
-# Interactive Plotly heatmap with live error output (Streamlit-compatible)
 import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 from sklearn.decomposition import NMF
+
+# Page config with error icon
+st.set_page_config(page_title="Interpolated Heatmap", page_icon="⚠️", layout="centered")
 
 # Parameters
 rows, cols, rank = 40, 60, 5
@@ -19,6 +21,10 @@ def generate_data(r, c, k):
 
 V_clean, V_noisy = generate_data(rows, cols, rank)
 
+# Slider for alpha
+alpha = st.slider("α", 0.0, 1.0, 0.0, step=1.0/steps)
+V_interp = (1 - alpha) * V_clean + alpha * V_noisy
+
 # Perform NMF with different cost functions
 def run_nmf(V, cost):
     model = NMF(n_components=rank, init='random', random_state=0, solver='mu', beta_loss=cost, max_iter=300)
@@ -28,27 +34,24 @@ def run_nmf(V, cost):
     error = np.linalg.norm(V - V_hat, 'fro')
     return error
 
-# Streamlit slider to control alpha
-alpha = st.slider("Interpolation alpha", 0.0, 1.0, 0.0, step=1.0/steps)
-V_interp = (1 - alpha) * V_clean + alpha * V_noisy
-
-# Run NMF live on the interpolated matrix
 error_fro = run_nmf(V_interp, 'frobenius')
 error_kl = run_nmf(V_interp, 'kullback-leibler')
 
-# Display heatmap for the current interpolation
+# Title
+st.title("🔶 Interpolated Heatmap")
+
+# Optional image (expander for pop-up feel)
+with st.expander("Show Heatmap Visualization"):
+    st.image("https://via.placeholder.com/700x400.png?text=Heatmap", use_column_width=True)
+
+# Generate figure
 fig = go.Figure(
     data=[go.Heatmap(z=V_interp, colorscale='Viridis')],
-    layout=go.Layout(title=f'Interpolated Heatmap (alpha={alpha:.2f})')
+    layout=go.Layout(width=700, height=500)
 )
-fig.update_layout(width=700, height=500)
-
-st.subheader("Interpolated Heatmap")
 st.plotly_chart(fig, use_container_width=True)
 
-# Output reconstruction errors
-st.markdown("### NMF Reconstruction Errors (Live)")
-st.write(f"Frobenius loss error: {error_fro:.4f}")
-st.write(f"Kullback-Leibler loss error: {error_kl:.4f}")
-
-st.info("Adjust the alpha slider to interpolate between clean and noisy data and see how reconstruction errors change.")
+# Distinct error metrics with columns
+col1, col2 = st.columns(2)
+col1.metric("Frobenius Loss", f"{error_fro:.4f}")
+col2.metric("KL Divergence", f"{error_kl:.4f}")
