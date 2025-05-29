@@ -26,45 +26,7 @@ V = W_true @ H_true + np.random.normal(loc=0.0, scale=noise_level, size=(matrix_
 V = np.clip(V, 0, None)
 st.write("Synthetic matrix generated with true rank", true_rank)
 
-# --- Real-time NMF Rank Comparison ---
-st.subheader("Rank Comparison")
-ranks = list(range(1, min(matrix_rows, matrix_cols, 25)))
-errors = []
-durations = []
-progress_bar = st.progress(0)
-status_text = st.empty()
 
-for i, r in enumerate(ranks):
-    model = NMF(n_components=r, init='random', solver='cd' if beta_loss == 'frobenius' else 'mu',
-                beta_loss=beta_loss, max_iter=max_iter, random_state=42)
-    start = time.time()
-    W = model.fit_transform(V)
-    H = model.components_
-    duration = time.time() - start
-
-    if beta_loss == 'frobenius':
-        err = np.linalg.norm(V - W @ H, 'fro')
-    else:
-        err = model.reconstruction_err_
-
-    errors.append(err)
-    durations.append(duration)
-
-    progress_bar.progress((i + 1) / len(ranks))
-    status_text.text(f"Rank {r}: error={err:.4f}, time={duration:.2f}s")
-
-fig, ax = plt.subplots(1, 2, figsize=(12, 5))
-ax[0].plot(ranks, errors, marker='o')
-ax[0].set_title("Reconstruction Error vs Rank")
-ax[0].set_xlabel("Rank")
-ax[0].set_ylabel("Reconstruction Error")
-
-ax[1].plot(ranks, durations, marker='x', color='orange')
-ax[1].set_title("Runtime vs Rank")
-ax[1].set_xlabel("Rank")
-ax[1].set_ylabel("Time (s)")
-
-st.pyplot(fig)
 
 # --- Real-time NMF Convergence ---
 st.subheader("Real-time NMF Convergence Visualization")
