@@ -22,11 +22,12 @@ V_clean, V_noisy = generate_data(rows, cols, rank)
 frames = []
 for i in range(steps + 1):
     alpha = i / steps
-n    V_interp = (1 - alpha) * V_clean + alpha * V_noisy
+    V_interp = (1 - alpha) * V_clean + alpha * V_noisy
     frames.append(go.Frame(
         data=[go.Heatmap(z=V_interp, colorscale='Viridis')],
         name=f'{alpha:.2f}'
     ))
+
 
 # Build figure
 fig = go.Figure(
