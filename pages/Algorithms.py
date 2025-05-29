@@ -3,7 +3,7 @@ import numpy as np
 import plotly.graph_objects as go
 
 # Page configuration
-st.set_page_config(page_title="Real-time NMF Convergence", page_icon="⚠️", layout="wide")
+st.set_page_config(page_title="Real-time NMF Convergence", page_icon="📉", layout="wide")
 
 # App title
 st.title("🔶 Real-time NMF Convergence")
