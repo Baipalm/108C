@@ -1,4 +1,5 @@
-# Interactive Plotly heatmap with built-in sliders (no ipywidgets)
+# Interactive Plotly heatmap with built-in sliders (Streamlit-compatible)
+import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 from sklearn.decomposition import NMF
@@ -27,7 +28,6 @@ for i in range(steps + 1):
         data=[go.Heatmap(z=V_interp, colorscale='Viridis')],
         name=f'{alpha:.2f}'
     ))
-
 
 # Build figure
 fig = go.Figure(
@@ -65,6 +65,9 @@ fig = go.Figure(
 )
 
 fig.update_layout(width=700, height=500)
-fig.show()
 
-print('Use the built-in slider or play button to interpolate between clean and noisy data.')
+# Display in Streamlit
+st.subheader("Interpolated Heatmap")
+st.plotly_chart(fig, use_container_width=True)
+
+st.info("Use the built-in slider or play button to interpolate between clean and noisy data.")
