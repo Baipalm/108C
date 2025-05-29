@@ -1,70 +1,69 @@
-# streamlit_nmf_rank_analysis_realtime.py
-import numpy as np
-import matplotlib.pyplot as plt
 import streamlit as st
+import numpy as np
+import plotly.graph_objects as go
 from sklearn.decomposition import NMF
-import time
 
-st.set_page_config(page_title="NMF Rank Sensitivity (Live)", layout="centered")
-st.title("Effect of Rank on NMF Reconstruction Error (Real-time)")
+# Page configuration
+st.set_page_config(page_title="NMF Rank Convergence Comparison", layout="wide")
 
-# User input for matrix dimensions and true rank
-matrix_rows = st.slider("Number of Rows", 10, 200, 50, step=10)
-matrix_cols = st.slider("Number of Columns", 10, 200, 80, step=10)
-true_rank = st.slider("True Rank (used to generate data)", 1, 20, 5)
-noise_level = st.slider("Noise Level", 0.0, 0.5, 0.05, step=0.01)
-beta_loss = st.selectbox("Loss Function", ['frobenius', 'kullback-leibler'])
-max_iter = st.slider("Max Iterations", 100, 1000, 300, step=100)
+# Title
+st.title("🔶 NMF Rank Convergence Comparison")
 
-np.random.seed(42)
-# Generate synthetic matrix with known low rank
-W_true = np.abs(np.random.rand(matrix_rows, true_rank))
-H_true = np.abs(np.random.rand(true_rank, matrix_cols))
-V = W_true @ H_true + np.random.normal(loc=0.0, scale=noise_level, size=(matrix_rows, matrix_cols))
-V = np.clip(V, 0, None)
+# Tabs
+tab1, tab2 = st.tabs(["Controls", "Convergence Plot"])
 
-ranks = list(range(1, min(matrix_rows, matrix_cols, 25)))
-errors = []
-durations = []
+# Controls Tab
+with tab1:
+    st.header("Parameters")
+    # Iterations slider
+    conv_iter = st.slider("Max Iterations", 10, 1000, 200, step=10)
+    # Learning rate for PGD
+    lr = st.slider("Learning Rate (PGD)", 0.0001, 0.1, 0.001, step=0.0001, format="%.4f")
+    # Choose ranks to compare
+    available_ranks = list(range(1, 26))
+    ranks = st.multiselect("Select Ranks (k) to Compare", available_ranks, default=[2, 5, 10])
 
-placeholder = st.empty()
-progress_bar = st.progress(0)
-
-for i, r in enumerate(ranks):
-    model = NMF(n_components=r, init='random', solver='cd' if beta_loss == 'frobenius' else 'mu',
-                beta_loss=beta_loss, max_iter=max_iter, random_state=42)
-    start = time.time()
-    W = model.fit_transform(V)
-    H = model.components_
-    duration = time.time() - start
-
-    if beta_loss == 'frobenius':
-        err = np.linalg.norm(V - W @ H, 'fro')
+# Convergence Plot Tab
+with tab2:
+    if not ranks:
+        st.warning("Please select at least one rank in the Controls tab.")
     else:
-        err = model.reconstruction_err_
+        # Generate random nonnegative matrix once (size based on max rank)
+        size = max(ranks)
+        V = np.abs(np.random.rand(size, size))
 
-    errors.append(err)
-    durations.append(duration)
+        # Convergence function (Multiplicative Update)
+        def nmf_mu(V, k, max_iter):
+            m, n = V.shape
+            W = np.abs(np.random.rand(m, k))
+            H = np.abs(np.random.rand(k, n))
+            errors = []
+            for _ in range(max_iter):
+                H *= (W.T @ V) / (W.T @ W @ H + 1e-10)
+                W *= (V @ H.T) / (W @ H @ H.T + 1e-10)
+                errors.append(np.linalg.norm(V - W @ H, 'fro'))
+            return errors
 
-    # Update real-time plot
-    fig, ax = plt.subplots(1, 2, figsize=(12, 5))
-    ax[0].plot(ranks[:i+1], errors, marker='o')
-    ax[0].set_title("Reconstruction Error vs Rank")
-    ax[0].set_xlabel("Rank")
-    ax[0].set_ylabel("Reconstruction Error")
+        # Plotly figure
+        fig = go.Figure()
+        for k in sorted(ranks):
+            errs = nmf_mu(V, k, conv_iter)
+            fig.add_trace(go.Scatter(
+                y=errs,
+                mode='lines',
+                name=f'k={k}'
+            ))
 
-    ax[1].plot(ranks[:i+1], durations, marker='x', color='orange')
-    ax[1].set_title("Runtime vs Rank")
-    ax[1].set_xlabel("Rank")
-    ax[1].set_ylabel("Time (s)")
+        # Layout
+        fig.update_layout(
+            title='Reconstruction Error vs Iteration for Various Ranks',
+            xaxis_title='Iteration',
+            yaxis_title='Frobenius Error',
+            width=1400,
+            height=700,
+            legend_title='Rank (k)',
+            template='plotly_white'
+        )
 
-    placeholder.pyplot(fig)
-    progress_bar.progress((i + 1) / len(ranks))
-
-st.success("Rank analysis complete!")
-st.info("""
-Choosing the right rank is crucial:
-- Too low: underfitting, large error.
-- Too high: overfitting, unnecessary complexity and increased time.
-- The best rank balances low error and model simplicity.
-""")
+        # Display
+        st.plotly_chart(fig, use_container_width=True)
