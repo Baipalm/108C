@@ -1,4 +1,4 @@
-# Interactive Plotly heatmap with built-in sliders (Streamlit-compatible)
+# Interactive Plotly heatmap with live error output (Streamlit-compatible)
 import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
@@ -28,63 +28,27 @@ def run_nmf(V, cost):
     error = np.linalg.norm(V - V_hat, 'fro')
     return error
 
-error_fro = run_nmf(V_noisy, 'frobenius')
-error_kl = run_nmf(V_noisy, 'kullback-leibler')
+# Streamlit slider to control alpha
+alpha = st.slider("Interpolation alpha", 0.0, 1.0, 0.0, step=1.0/steps)
+V_interp = (1 - alpha) * V_clean + alpha * V_noisy
 
-# Prepare frames for interpolation
-frames = []
-for i in range(steps + 1):
-    alpha = i / steps
-    V_interp = (1 - alpha) * V_clean + alpha * V_noisy
-    frames.append(go.Frame(
-        data=[go.Heatmap(z=V_interp, colorscale='Viridis')],
-        name=f'{alpha:.2f}'
-    ))
+# Run NMF live on the interpolated matrix
+error_fro = run_nmf(V_interp, 'frobenius')
+error_kl = run_nmf(V_interp, 'kullback-leibler')
 
-# Build figure
+# Display heatmap for the current interpolation
 fig = go.Figure(
-    data=[go.Heatmap(z=V_clean, colorscale='Viridis')],
-    frames=frames,
-    layout=go.Layout(
-        title='Interpolated Heatmap',
-        updatemenus=[
-            dict(
-                type='buttons',
-                showactive=False,
-                y=1.05,
-                x=1.15,
-                xanchor='right',
-                yanchor='top',
-                pad=dict(t=0, r=10),
-                buttons=[
-                    dict(label='Play', method='animate', args=[None, {'frame': {'duration': 100, 'redraw': True}}]),
-                    dict(label='Pause', method='animate', args=[[None], {'frame': {'duration': 0, 'redraw': False}}])
-                ]
-            )
-        ],
-        sliders=[
-            dict(
-                steps=[
-                    dict(method='animate', args=[[fr.name], {'frame': {'duration': 0, 'redraw': True}}], label=fr.name)
-                    for fr in frames
-                ],
-                transition={'duration': 0},
-                x=0, y=-0.1,
-                currentvalue={'prefix': 'alpha = '}
-            )
-        ]
-    )
+    data=[go.Heatmap(z=V_interp, colorscale='Viridis')],
+    layout=go.Layout(title=f'Interpolated Heatmap (alpha={alpha:.2f})')
 )
-
 fig.update_layout(width=700, height=500)
 
-# Display in Streamlit
 st.subheader("Interpolated Heatmap")
 st.plotly_chart(fig, use_container_width=True)
 
 # Output reconstruction errors
-st.markdown("### NMF Reconstruction Errors")
+st.markdown("### NMF Reconstruction Errors (Live)")
 st.write(f"Frobenius loss error: {error_fro:.4f}")
 st.write(f"Kullback-Leibler loss error: {error_kl:.4f}")
 
-st.info("Use the built-in slider or play button to interpolate between clean and noisy data.")
+st.info("Adjust the alpha slider to interpolate between clean and noisy data and see how reconstruction errors change.")
