@@ -3,12 +3,10 @@ import numpy as np
 import plotly.graph_objects as go
 
 # Page configuration with letter 'r' as icon
-st.set_page_config(page_title="NMF Convergence Comparison", page_icon="🇷", layout="wide")
+st.set_page_config(page_title="NMF Convergence Comparison", page_icon="r", layout="wide")
 
 # Title
 st.title("🔶 NMF Convergence Comparison")
-
-
 
 # Sidebar sliders for convergence parameters
 st.sidebar.header("Convergence Parameters")
@@ -17,16 +15,12 @@ rank = st.sidebar.slider("Factorization Rank", 1, 50, 5)
 conv_iter = st.sidebar.slider("Iterations", 10, 1000, 200, step=10)
 lr = st.sidebar.slider("Learning Rate (PGD)", 0.0001, 0.1, 0.001, step=0.0001, format="%.4f")
 
-
-# Cache your data‐generation function
+# Caching functions
 @st.cache_data(show_spinner=False)
-def generate_matrix(size: int) -> np.ndarray:
-    """Generates and returns a nonnegative random matrix of shape (size, size)."""
-    np.random.seed(42)
-    return np.abs(np.random.rand(size, size))
+def generate_matrix(matrix_size):
+    return np.abs(np.random.rand(matrix_size, matrix_size))
 
-
-# NMF convergence functions
+@st.cache_data(show_spinner=False)
 def nmf_als(V, rank, max_iter):
     m, n = V.shape
     W = np.abs(np.random.rand(m, rank))
@@ -40,6 +34,7 @@ def nmf_als(V, rank, max_iter):
         errors.append(np.linalg.norm(V - W @ H, 'fro'))
     return errors
 
+@st.cache_data(show_spinner=False)
 def nmf_mu(V, rank, max_iter):
     m, n = V.shape
     W = np.abs(np.random.rand(m, rank))
@@ -51,6 +46,7 @@ def nmf_mu(V, rank, max_iter):
         errors.append(np.linalg.norm(V - W @ H, 'fro'))
     return errors
 
+@st.cache_data(show_spinner=False)
 def nmf_pgd(V, rank, max_iter, lr):
     m, n = V.shape
     W = np.abs(np.random.rand(m, rank))
@@ -67,7 +63,7 @@ def nmf_pgd(V, rank, max_iter, lr):
     return errors
 
 # Generate random matrix for convergence test
-V = np.abs(np.random.rand(matrix_size, matrix_size))
+V = generate_matrix(matrix_size)
 
 # Compute errors
 errors_als = nmf_als(V, rank, conv_iter)
