@@ -19,6 +19,18 @@ def generate_data(r, c, k):
 
 V_clean, V_noisy = generate_data(rows, cols, rank)
 
+# Perform NMF with different cost functions
+def run_nmf(V, cost):
+    model = NMF(n_components=rank, init='random', random_state=0, solver='mu', beta_loss=cost, max_iter=300)
+    W = model.fit_transform(V)
+    H = model.components_
+    V_hat = W @ H
+    error = np.linalg.norm(V - V_hat, 'fro')
+    return error
+
+error_fro = run_nmf(V_noisy, 'frobenius')
+error_kl = run_nmf(V_noisy, 'kullback-leibler')
+
 # Prepare frames for interpolation
 frames = []
 for i in range(steps + 1):
@@ -69,5 +81,10 @@ fig.update_layout(width=700, height=500)
 # Display in Streamlit
 st.subheader("Interpolated Heatmap")
 st.plotly_chart(fig, use_container_width=True)
+
+# Output reconstruction errors
+st.markdown("### NMF Reconstruction Errors")
+st.write(f"Frobenius loss error: {error_fro:.4f}")
+st.write(f"Kullback-Leibler loss error: {error_kl:.4f}")
 
 st.info("Use the built-in slider or play button to interpolate between clean and noisy data.")
