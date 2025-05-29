@@ -8,12 +8,20 @@ st.set_page_config(page_title="NMF Convergence Comparison", page_icon="🇷", la
 # Title
 st.title("🔶 NMF Convergence Comparison")
 
+
+
 # Sidebar sliders for convergence parameters
 st.sidebar.header("Convergence Parameters")
 matrix_size = st.sidebar.slider("Matrix Size (N×N)", 10, 500, 100, step=10)
 rank = st.sidebar.slider("Factorization Rank", 1, 50, 5)
 conv_iter = st.sidebar.slider("Iterations", 10, 1000, 200, step=10)
 lr = st.sidebar.slider("Learning Rate (PGD)", 0.0001, 0.1, 0.001, step=0.0001, format="%.4f")
+
+@st.cache_data
+def generate_random_matrix(size):
+    return np.abs(np.random.rand(size, size))
+
+V = generate_random_matrix(matrix_size)
 
 # NMF convergence functions
 def nmf_als(V, rank, max_iter):
