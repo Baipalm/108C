@@ -91,6 +91,5 @@ st.plotly_chart(fig2)
 
 st.info("""
 This dashboard shows how NMF behaves under different ranks and update rules:
-- Explore the trade-off between rank, error, and runtime.
 - Understand convergence dynamics using ALS, MU, and PGD.
 """)
