@@ -21,8 +21,8 @@ def generate_data(r, c, k):
 
 V_clean, V_noisy = generate_data(rows, cols, rank)
 
-# Slider for alpha
-alpha = st.slider("α", 0.0, 1.0, 0.0, step=1.0/steps)
+# Sidebar slider for alpha
+alpha = st.sidebar.slider("Adjust α (Interpolation Factor)", 0.0, 1.0, 0.0, step=1.0/steps)
 V_interp = (1 - alpha) * V_clean + alpha * V_noisy
 
 # Perform NMF with different cost functions
@@ -51,7 +51,8 @@ fig = go.Figure(
 )
 st.plotly_chart(fig, use_container_width=True)
 
-# Distinct error metrics with columns
+# Distinct error metrics displayed below the figure
+st.markdown("### Reconstruction Errors")
 col1, col2 = st.columns(2)
 col1.metric("Frobenius Loss", f"{error_fro:.4f}")
 col2.metric("KL Divergence", f"{error_kl:.4f}")
