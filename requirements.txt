@@ -2,5 +2,5 @@ streamlit
 plotly
 matplotlib
 scikit-learn>=1.0,<1.5  
-ipywidget
+ipywidgets==8.1.7
 
