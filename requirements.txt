@@ -2,5 +2,6 @@ streamlit
 plotly
 matplotlib
 scikit-learn>=1.0,<1.5  
+spotipy
 
 
