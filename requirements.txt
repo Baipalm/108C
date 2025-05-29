@@ -1,5 +1,4 @@
 streamlit
 plotly
-sklearn.decomposition
-matplotlib.pyplot
+
 
