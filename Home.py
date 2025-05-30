@@ -10,11 +10,6 @@ from sklearn.decomposition import NMF
 import streamlit as st
 
 
-# Ensure credentials
-os.environ.setdefault('SPOTIPY_CLIENT_ID', '6e24be3599a74e7e994196fe19ee4751')
-os.environ.setdefault('SPOTIPY_CLIENT_SECRET', '68d61a04d1ea4a37a0a843c475847a2a')
-sp = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials())
-
 st.set_page_config(
     page_title="NMF Demonstration",
 )
