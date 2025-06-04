@@ -14,6 +14,13 @@ os.environ.setdefault('SPOTIPY_CLIENT_SECRET', "a82dc9645179473a831e2592e4c6cc01
 
 st.set_page_config(page_title="Playlist Genre Approximation")
 
+CSV_URL = "https://github.com/Baipalm/108C/blob/main/H_df.csv"
+
+@st.cache_data  # Caches the result to avoid reloading every time
+def load_data(url):
+    return pd.read_csv(url, index_col=0)
+
+H_df = load_data(CSV_URL)
 # Precomputed NMF components matrix H_df (n_components x n_genres).
 # For example, H_df could be loaded from a CSV file or defined elsewhere.
 # It should have genres as columns, e.g.:
