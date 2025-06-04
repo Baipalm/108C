@@ -8,6 +8,10 @@ import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 import streamlit as st
 
+# Ensure credentials
+os.environ.setdefault('SPOTIPY_CLIENT_ID', "b765b3912e444a5dacd47107641b54aa")
+os.environ.setdefault('SPOTIPY_CLIENT_SECRET', "a82dc9645179473a831e2592e4c6cc01")
+
 st.set_page_config(page_title="Playlist Genre Approximation")
 
 # Precomputed NMF components matrix H_df (n_components x n_genres).
