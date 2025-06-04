@@ -14,7 +14,7 @@ os.environ.setdefault('SPOTIPY_CLIENT_SECRET', "a82dc9645179473a831e2592e4c6cc01
 
 st.set_page_config(page_title="Playlist Genre Approximation")
 
-CSV_URL = "https://raw.githubusercontent.com/Baipalm/108C/blob/main/H_df.csv"
+CSV_URL = "https://raw.githubusercontent.com/Baipalm/108C/main/H_df.csv"
 
 @st.cache_data  # Caches the result to avoid reloading every time
 def load_data(url):
