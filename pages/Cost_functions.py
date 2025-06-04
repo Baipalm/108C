@@ -16,7 +16,7 @@ def generate_data(r, c, k):
     V_clean = np.abs(np.random.rand(r, c))
     W_true = np.abs(np.random.gamma(1.0, 1.0, (r, k)))
     H_true = np.abs(np.random.gamma(1.0, 1.0, (k, c)))
-    V_noisy = np.clip(W_true @ H_true + np.random.poisson(0.5, (r, c)), 1e-1, None)
+    V_noisy = np.clip(W_true @ H_true + np.random.poisson(0.5, (r, c)), 1e-10, None)
     return V_clean, V_noisy
 
 V_clean, V_noisy = generate_data(rows, cols, rank)
@@ -31,7 +31,7 @@ def run_nmf(V, cost):
     W = model.fit_transform(V)
     H = model.components_
     V_hat = W @ H
-    error = np.linalg.norm(V - V_hat, 'fro')
+    error = np.linalg.norm(V - V_hat, 'nuc')
     return error
 
 error_fro = run_nmf(V_interp, 'frobenius')
