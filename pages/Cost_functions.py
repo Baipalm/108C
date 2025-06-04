@@ -38,7 +38,7 @@ error_fro = run_nmf(V_interp, 'frobenius')
 error_kl = run_nmf(V_interp, 'kullback-leibler')
 
 # Title
-st.title("🔶 Interpolated Heatmap")
+st.title("🔶 Reconstruction Error Heatmap")
 
 # Generate figure
 fig = go.Figure(
