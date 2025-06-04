@@ -22,7 +22,7 @@ def generate_data(r, c, k):
 V_clean, V_noisy = generate_data(rows, cols, rank)
 
 # Sidebar slider for alpha
-alpha = st.sidebar.slider("Adjust α (Interpolation Factor)", 0.0, 1.0, 0.0, step=1.0/steps)
+alpha = st.sidebar.slider("Adjust correlated noise (poisson)", 0.0, 1.0, 0.0, step=1.0/steps)
 V_interp = (1 - alpha) * V_clean + alpha * V_noisy
 
 # Perform NMF with different cost functions
