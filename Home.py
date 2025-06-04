@@ -84,9 +84,7 @@ def get_genre_counts(sp_client, playlist_id: str) -> Counter:
     return counts
 
 def main():
-    st.title("🎵 Playlist Genre Approximation with NMF Components")
-    st.write("Enter a Spotify playlist URL to analyze its genre profile using precomputed NMF components.")
-
+    st.title("🎵 Input Public Spotify Playlist")
     url = st.text_input("Spotify Playlist URL or URI:")
     if st.button("Analyze") and url:
         try:
@@ -127,8 +125,7 @@ def main():
             st.subheader("Meta-Genre Component Weights")
             st.dataframe(weight_df.style.format("{:.4f}"))
             
-            st.markdown("The weights above indicate how strongly the playlist's genre profile aligns with each NMF-derived meta-genre. "
-                        "Higher weights mean the component contributes more to reconstructing the playlist's genres.")
+            st.markdown("Your playlist is a given combination of the following genre profiles ")
         except Exception as e:
             st.error(f"An error occurred: {e}")
 
