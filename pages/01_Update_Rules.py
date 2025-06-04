@@ -1,6 +1,7 @@
 import numpy as np
 import streamlit as st
 import plotly.graph_objects as go
+import time
 
 st.set_page_config(page_title="Real-time NMF Convergence", page_icon="📉", layout="wide")
 st.title("Real-time NMF Convergence")
@@ -21,74 +22,79 @@ def generate_matrix(size):
 V_conv = generate_matrix(matrix_size)
 
 # NMF implementations
-@st.cache_data
 
-def nmf_als(V, rank, max_iter=100):
-    m, n = V.shape
-    W = np.abs(np.random.rand(m, rank))
-    H = np.abs(np.random.rand(rank, n))
-    errors = []
-    for i in range(max_iter):
-        H = np.linalg.lstsq(W, V, rcond=None)[0]
-        H[H < 0] = 0
-        W = np.linalg.lstsq(H.T, V.T, rcond=None)[0].T
-        W[W < 0] = 0
-        if i % 5 == 0:
-            errors.append(np.linalg.norm(V - W @ H, 'fro'))
-    return errors
+def nmf_step_als(V, W, H):
+    H = np.linalg.lstsq(W, V, rcond=None)[0]
+    H[H < 0] = 0
+    W = np.linalg.lstsq(H.T, V.T, rcond=None)[0].T
+    W[W < 0] = 0
+    return W, H
 
-@st.cache_data
+def nmf_step_mu(V, W, H):
+    H *= (W.T @ V) / (W.T @ W @ H + 1e-10)
+    W *= (V @ H.T) / (W @ H @ H.T + 1e-10)
+    return W, H
 
-def nmf_mu(V, rank, max_iter=100):
-    m, n = V.shape
-    W = np.abs(np.random.rand(m, rank))
-    H = np.abs(np.random.rand(rank, n))
-    errors = []
-    for i in range(max_iter):
-        H *= (W.T @ V) / (W.T @ W @ H + 1e-10)
-        W *= (V @ H.T) / (W @ H @ H.T + 1e-10)
-        if i % 5 == 0:
-            errors.append(np.linalg.norm(V - W @ H, 'fro'))
-    return errors
+def nmf_step_pgd(V, W, H, lr):
+    grad_W = W @ H @ H.T - V @ H.T
+    grad_H = W.T @ W @ H - W.T @ V
+    W -= lr * grad_W
+    H -= lr * grad_H
+    W[W < 0] = 0
+    H[H < 0] = 0
+    return W, H
 
-@st.cache_data
-
-def nmf_pgd(V, rank, max_iter=100, lr=0.001):
-    m, n = V.shape
-    W = np.abs(np.random.rand(m, rank))
-    H = np.abs(np.random.rand(rank, n))
-    errors = []
-    for i in range(max_iter):
-        grad_W = W @ H @ H.T - V @ H.T
-        grad_H = W.T @ W @ H - W.T @ V
-        W -= lr * grad_W
-        H -= lr * grad_H
-        W[W < 0] = 0
-        H[H < 0] = 0
-        if i % 5 == 0:
-            errors.append(np.linalg.norm(V - W @ H, 'fro'))
-    return errors
-
-# Button to trigger computation (reduces initial load)
+# Button to trigger computation
 if st.sidebar.button("Run NMF Convergence"):
-    st.write("Running NMF convergence...")
-    errors_als = nmf_als(V_conv, rank, conv_iter)
-    errors_mu = nmf_mu(V_conv, rank, conv_iter)
-    errors_pgd = nmf_pgd(V_conv, rank, conv_iter, lr)
+    st.write("Running real-time NMF convergence...")
 
-    # Plot convergence errors
-    fig2 = go.Figure()
-    fig2.add_trace(go.Scatter(y=errors_als, mode='lines', name='ALS'))
-    fig2.add_trace(go.Scatter(y=errors_mu, mode='lines', name='Multiplicative Update'))
-    fig2.add_trace(go.Scatter(y=errors_pgd, mode='lines', name='Projected Gradient'))
-    fig2.update_layout(
-        title='NMF Convergence Comparison',
-        xaxis_title='Iterations (every 5)',
-        yaxis_title='Frobenius Norm Error',
-        width=900,
-        height=600,
-        margin=dict(l=40, r=40, t=60, b=40)
-    )
-    st.plotly_chart(fig2, use_container_width=True)
+    # Initializations
+    m, n = V_conv.shape
+    W_als = np.abs(np.random.rand(m, rank))
+    H_als = np.abs(np.random.rand(rank, n))
+    W_mu = W_als.copy()
+    H_mu = H_als.copy()
+    W_pgd = W_als.copy()
+    H_pgd = H_als.copy()
+
+    errors_als = []
+    errors_mu = []
+    errors_pgd = []
+
+    graph_placeholder = st.empty()
+    error_placeholder = st.empty()
+
+    for i in range(conv_iter):
+        W_als, H_als = nmf_step_als(V_conv, W_als, H_als)
+        W_mu, H_mu = nmf_step_mu(V_conv, W_mu, H_mu)
+        W_pgd, H_pgd = nmf_step_pgd(V_conv, W_pgd, H_pgd, lr)
+
+        if i % 1 == 0:
+            err_als = np.linalg.norm(V_conv - W_als @ H_als, 'fro')
+            err_mu = np.linalg.norm(V_conv - W_mu @ H_mu, 'fro')
+            err_pgd = np.linalg.norm(V_conv - W_pgd @ H_pgd, 'fro')
+            errors_als.append(err_als)
+            errors_mu.append(err_mu)
+            errors_pgd.append(err_pgd)
+
+            fig2 = go.Figure()
+            fig2.add_trace(go.Scatter(y=errors_als, mode='lines+markers', name='ALS'))
+            fig2.add_trace(go.Scatter(y=errors_mu, mode='lines+markers', name='Multiplicative Update'))
+            fig2.add_trace(go.Scatter(y=errors_pgd, mode='lines+markers', name='Projected Gradient'))
+            fig2.update_layout(
+                title='NMF Convergence Comparison (Live)',
+                xaxis_title='Iteration',
+                yaxis_title='Frobenius Norm Error',
+                width=900,
+                height=600,
+                margin=dict(l=40, r=40, t=60, b=40)
+            )
+            graph_placeholder.plotly_chart(fig2, use_container_width=True)
+            error_placeholder.markdown(f"**Iteration {i+1}**  ")
+            error_placeholder.markdown(f"ALS Error: `{err_als:.4f}`  ")
+            error_placeholder.markdown(f"MU Error: `{err_mu:.4f}`  ")
+            error_placeholder.markdown(f"PGD Error: `{err_pgd:.4f}`")
+
+            time.sleep(0.1)
 else:
     st.info("Adjust parameters and click 'Run NMF Convergence' to start.")
