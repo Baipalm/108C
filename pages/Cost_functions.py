@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 from sklearn.decomposition import NMF
 
 # Page config with error icon
-st.set_page_config(page_title="Interpolated Heatmap", page_icon="⚠️", layout="centered")
+st.set_page_config(page_title="Error Heatmap", page_icon="⚠️", layout="centered")
 
 # Parameters
 rows, cols, rank = 40, 60, 5
