@@ -21,6 +21,8 @@ def generate_matrix(size):
 V_conv = generate_matrix(matrix_size)
 
 # NMF implementations
+@st.cache_data
+
 def nmf_als(V, rank, max_iter=100):
     m, n = V.shape
     W = np.abs(np.random.rand(m, rank))
@@ -31,8 +33,11 @@ def nmf_als(V, rank, max_iter=100):
         H[H < 0] = 0
         W = np.linalg.lstsq(H.T, V.T, rcond=None)[0].T
         W[W < 0] = 0
-        errors.append(np.linalg.norm(V - W @ H, 'fro'))
+        if i % 5 == 0:
+            errors.append(np.linalg.norm(V - W @ H, 'fro'))
     return errors
+
+@st.cache_data
 
 def nmf_mu(V, rank, max_iter=100):
     m, n = V.shape
@@ -42,8 +47,11 @@ def nmf_mu(V, rank, max_iter=100):
     for i in range(max_iter):
         H *= (W.T @ V) / (W.T @ W @ H + 1e-10)
         W *= (V @ H.T) / (W @ H @ H.T + 1e-10)
-        errors.append(np.linalg.norm(V - W @ H, 'fro'))
+        if i % 5 == 0:
+            errors.append(np.linalg.norm(V - W @ H, 'fro'))
     return errors
+
+@st.cache_data
 
 def nmf_pgd(V, rank, max_iter=100, lr=0.001):
     m, n = V.shape
@@ -57,7 +65,8 @@ def nmf_pgd(V, rank, max_iter=100, lr=0.001):
         H -= lr * grad_H
         W[W < 0] = 0
         H[H < 0] = 0
-        errors.append(np.linalg.norm(V - W @ H, 'fro'))
+        if i % 5 == 0:
+            errors.append(np.linalg.norm(V - W @ H, 'fro'))
     return errors
 
 # Button to trigger computation (reduces initial load)
@@ -74,7 +83,7 @@ if st.sidebar.button("Run NMF Convergence"):
     fig2.add_trace(go.Scatter(y=errors_pgd, mode='lines', name='Projected Gradient'))
     fig2.update_layout(
         title='NMF Convergence Comparison',
-        xaxis_title='Iterations',
+        xaxis_title='Iterations (every 5)',
         yaxis_title='Frobenius Norm Error',
         width=900,
         height=600,
