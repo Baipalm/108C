@@ -38,8 +38,8 @@ def run_nmf(V, cost):
 
 fro = run_nmf(V_interp, 'frobenius')
 kl = run_nmf(V_interp, 'kullback-leibler')
-error_fro = np.linalg.norm(V-fro, 'fro')
-error_kl = kl_divergence(V,kl)
+error_fro = np.linalg.norm(V_terp-fro, 'fro')
+error_kl = kl_divergence(V_interp,kl)
 
 # Title
 st.title("🔶 Reconstruction Error Heatmap")
