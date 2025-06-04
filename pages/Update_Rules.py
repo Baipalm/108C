@@ -83,4 +83,3 @@ if st.sidebar.button("Run NMF Convergence"):
     st.plotly_chart(fig2, use_container_width=True)
 else:
     st.info("Adjust parameters and click 'Run NMF Convergence' to start.")
-
