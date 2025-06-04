@@ -24,18 +24,22 @@ V_clean, V_noisy = generate_data(rows, cols, rank)
 # Sidebar slider for alpha
 alpha = st.sidebar.slider("Adjust correlated noise (poisson)", 0.0, 1.0, 0.0, step=1.0/steps)
 V_interp = (1 - alpha) * V_clean + alpha * V_noisy
-
+def kl_divergence(p: np.ndarray, q: np.ndarray, eps: float=1e-10) -> float:
+    p_safe, q_safe = p+eps, q+eps
+    p_norm, q_norm = p_safe / p_safe.sum(), q_safe / q_safe.sum()
+    return float(np.sum(p_norm * np.log(p_norm / q_norm)))
 # Perform NMF with different cost functions
 def run_nmf(V, cost):
     model = NMF(n_components=rank, init='random', random_state=0, solver='mu', beta_loss=cost, max_iter=300)
     W = model.fit_transform(V)
     H = model.components_
     V_hat = W @ H
-    error = np.linalg.norm(V - V_hat, 'fro')
-    return error
+    return V_hat
 
-error_fro = run_nmf(V_interp, 'frobenius')
-error_kl = run_nmf(V_interp, 'kullback-leibler')
+fro = run_nmf(V_interp, 'frobenius')
+kl = run_nmf(V_interp, 'kullback-leibler')
+error_fro = np.linalg.norm(V-fro, 'fro')
+error_kl = kl_divergence(V,kl)
 
 # Title
 st.title("🔶 Reconstruction Error Heatmap")
