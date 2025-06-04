@@ -31,7 +31,7 @@ def run_nmf(V, cost):
     W = model.fit_transform(V)
     H = model.components_
     V_hat = W @ H
-    error = np.linalg.norm(V - V_hat, 'inf')
+    error = np.linalg.norm(V - V_hat, 'fro')
     return error
 
 error_fro = run_nmf(V_interp, 'frobenius')
