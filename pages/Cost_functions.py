@@ -7,7 +7,7 @@ from sklearn.decomposition import NMF
 st.set_page_config(page_title="Error Heatmap", page_icon="⚠️", layout="centered")
 
 # Parameters
-rows, cols, rank = 40, 60, 5
+rows, cols, rank = 40, 60, 10
 steps = 50  # number of interpolation steps
 
 # Generate data
