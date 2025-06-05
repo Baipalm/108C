@@ -7,19 +7,17 @@ from sklearn.decomposition import NMF
 st.set_page_config(page_title="Error Heatmap", page_icon="⚠️", layout="centered")
 
 # Parameters
-rows, cols, rank = 40, 60, 20
+rows, cols, rank = 40, 60
 steps = 50  # number of interpolation steps
 
 # Generate data
-def generate_data(r, c, k):
+def generate_data(r, c):
     np.random.seed(42)
     V_clean = np.abs(np.random.rand(r, c))
-    W_true = np.abs(np.random.gamma(1.0, 1.0, (r, k)))
-    H_true = np.abs(np.random.gamma(1.0, 1.0, (k, c)))
-    V_noisy = np.clip(W_true @ H_true + np.random.poisson(0.5, (r, c)), 1e-10, None)
+    V_noisy = np.clip(V_clean + np.random.poisson(0.5, (r, c)), 1e-10, None)
     return V_clean, V_noisy
 
-V_clean, V_noisy = generate_data(rows, cols, rank)
+V_clean, V_noisy = generate_data(rows, cols)
 
 # Sidebar slider for alpha
 alpha = st.sidebar.slider("Adjust correlated noise (poisson)", 0.0, 1.0, 0.0, step=1.0/steps)
